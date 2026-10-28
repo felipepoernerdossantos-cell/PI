@@ -1,0 +1,62 @@
+BARBER KING - Site e painel conectados ao MariaDB
+
+Este projeto pode ser armazenado no GitHub, mas nao funciona como site no
+GitHub Pages: o Pages nao executa PHP nem conecta ao MariaDB. Para publicar o
+site funcional, use uma hospedagem com PHP 8.2+ e MySQL/MariaDB.
+
+Requisitos:
+- PHP 8.2 ou superior com PDO MySQL habilitado.
+- MySQL/MariaDB com o banco barber_king criado.
+
+Preparar o banco:
+1. Crie o banco barber_king no MySQL/MariaDB.
+2. Importe barber_king.sql pelo phpMyAdmin ou cliente MySQL.
+3. Configure as variaveis de ambiente do PHP descritas abaixo.
+
+Configuracao no PowerShell (substitua os valores pelos seus; nao use estes
+exemplos como senhas reais):
+$env:BK_DB_HOST = "127.0.0.1"
+$env:BK_DB_NAME = "barber_king"
+$env:BK_DB_USER = "seu_usuario_mysql"
+$env:BK_DB_PASSWORD = "sua_senha_mysql"
+$env:BK_ADMIN_USER = "admin"
+$env:BK_ADMIN_PASSWORD = "defina-uma-senha-forte-e-exclusiva"
+
+Esses comandos valem somente para esse PowerShell. Para usa-los, inicie o
+servidor embutido na pasta do projeto, na mesma janela:
+C:\xampp\php\php.exe -S 127.0.0.1:8000
+
+Abra o site em http://127.0.0.1:8000/index%206.html e o painel em
+http://127.0.0.1:8000/admin.php. Nao abra os arquivos HTML diretamente pelo
+navegador nem use um servidor estatico: a API exige PHP e conexao com o banco.
+
+O arquivo .htaccess local e ignorado pelo Git e nao e incluido no repositorio.
+No Apache/XAMPP local, crie esse arquivo na pasta do projeto com as linhas
+abaixo (ajuste os valores se necessario):
+
+SetEnv BK_DB_USER root
+SetEnv BK_DB_PASSWORD ""
+
+Para o Apache do XAMPP servindo este projeto em http://localhost/PI/, esses
+valores correspondem a configuracao padrao do MySQL local. Reinicie o Apache
+no XAMPP Control Panel. Se voce definiu uma senha para root, ajuste
+BK_DB_PASSWORD nesse arquivo local.
+
+O arquivo so funciona com Apache e AllowOverride habilitado. Em outros
+servidores, configure BK_DB_USER e BK_DB_PASSWORD no ambiente do PHP. Os
+comandos $env: do PowerShell valem apenas para o servidor PHP embutido iniciado
+na mesma janela; nao configuram o Apache que ja esta rodando. Nunca use root
+sem senha em producao.
+
+O site consulta do banco os servicos, barbeiros, produtos e avaliacoes
+aprovadas. Agendamentos verificam conflitos no servidor; mensagens e pedidos
+sao gravados no MariaDB. O estoque e reduzido quando um pedido e registrado.
+
+O painel protegido por login permite listar, criar, editar e excluir registros
+das tabelas agendamentos, assinaturas, avaliacoes, barbeiros, clientes,
+mensagens, pedidos, pedido_itens, produtos e servicos. A exclusao pode ser
+impedida por chaves estrangeiras quando existem registros relacionados.
+
+As credenciais sao lidas exclusivamente das variaveis de ambiente; nao grave
+senhas no JavaScript, no banco de codigo ou em arquivos publicos. Em producao,
+use HTTPS e configure as variaveis no ambiente do servidor web.

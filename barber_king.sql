@@ -9,6 +9,9 @@
 
 USE `if0_43297127_barberking`;
 
+DROP VIEW IF EXISTS `vw_agendamentos_completos`;
+DROP TABLE IF EXISTS `agendamentos`;
+
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
@@ -22,24 +25,6 @@ SET time_zone = "+00:00";
 --
 -- Banco de dados de hospedagem: `if0_43297127_barberking`
 --
-
--- --------------------------------------------------------
-
---
--- Estrutura para tabela `agendamentos`
---
-
-CREATE TABLE `agendamentos` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `cliente_id` int(10) UNSIGNED NOT NULL,
-  `barbeiro_id` int(10) UNSIGNED NOT NULL,
-  `servico_id` int(10) UNSIGNED NOT NULL,
-  `data_agendamento` date NOT NULL,
-  `hora_agendamento` time NOT NULL,
-  `status` enum('agendado','confirmado','concluido','cancelado') NOT NULL DEFAULT 'agendado',
-  `observacoes` varchar(500) DEFAULT NULL,
-  `criado_em` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -223,27 +208,9 @@ INSERT INTO `servicos` (`id`, `nome`, `descricao`, `preco`, `duracao_minutos`, `
 (5, 'Sobrancelha', 'Alinhamento com atenção a cada detalhe.', 15.00, 15, 1, '2026-10-07 17:41:09'),
 (6, 'Pigmentação', 'Realce de barba ou cabelo, na medida certa.', 30.00, 30, 1, '2026-10-07 17:41:09');
 
--- --------------------------------------------------------
-
--- Estrutura para view `vw_agendamentos_completos`
---
-DROP VIEW IF EXISTS `vw_agendamentos_completos`;
-
-CREATE ALGORITHM=UNDEFINED SQL SECURITY INVOKER VIEW `vw_agendamentos_completos` AS SELECT `a`.`id` AS `id`, `c`.`nome` AS `cliente`, `c`.`telefone` AS `telefone`, `c`.`email` AS `email`, `b`.`nome` AS `barbeiro`, `s`.`nome` AS `servico`, `s`.`preco` AS `preco`, `s`.`duracao_minutos` AS `duracao_minutos`, `a`.`data_agendamento` AS `data_agendamento`, `a`.`hora_agendamento` AS `hora_agendamento`, `a`.`status` AS `status`, `a`.`criado_em` AS `criado_em` FROM (((`agendamentos` `a` join `clientes` `c` on(`c`.`id` = `a`.`cliente_id`)) join `barbeiros` `b` on(`b`.`id` = `a`.`barbeiro_id`)) join `servicos` `s` on(`s`.`id` = `a`.`servico_id`));
-
 --
 -- Índices para tabelas despejadas
 --
-
---
--- Índices de tabela `agendamentos`
---
-ALTER TABLE `agendamentos`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `fk_agendamento_cliente` (`cliente_id`),
-  ADD KEY `fk_agendamento_servico` (`servico_id`),
-  ADD KEY `idx_agendamento_data` (`data_agendamento`),
-  ADD KEY `idx_agendamento_barbeiro_data` (`barbeiro_id`,`data_agendamento`);
 
 --
 -- Índices de tabela `assinaturas`
@@ -310,12 +277,6 @@ ALTER TABLE `servicos`
 --
 
 --
--- AUTO_INCREMENT de tabela `agendamentos`
---
-ALTER TABLE `agendamentos`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
 -- AUTO_INCREMENT de tabela `assinaturas`
 --
 ALTER TABLE `assinaturas`
@@ -372,14 +333,6 @@ ALTER TABLE `servicos`
 --
 -- Restrições para tabelas despejadas
 --
-
---
--- Restrições para tabelas `agendamentos`
---
-ALTER TABLE `agendamentos`
-  ADD CONSTRAINT `fk_agendamento_barbeiro` FOREIGN KEY (`barbeiro_id`) REFERENCES `barbeiros` (`id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_agendamento_cliente` FOREIGN KEY (`cliente_id`) REFERENCES `clientes` (`id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_agendamento_servico` FOREIGN KEY (`servico_id`) REFERENCES `servicos` (`id`) ON UPDATE CASCADE;
 
 --
 -- Restrições para tabelas `assinaturas`

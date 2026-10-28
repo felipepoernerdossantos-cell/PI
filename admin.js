@@ -1,5 +1,4 @@
 const tables = {
-  agendamentos: { label:'Agendamentos', fields:[['cliente_id','Cliente ID','number'],['barbeiro_id','Barbeiro ID','number'],['servico_id','Serviço ID','number'],['data_agendamento','Data','date'],['hora_agendamento','Horário','time'],['status','Status','select',['agendado','confirmado','concluido','cancelado']],['observacoes','Observações','textarea',true]] },
   assinaturas: { label:'Assinaturas', fields:[['cliente_id','Cliente ID','number'],['plano','Plano','text'],['valor_mensal','Valor mensal','number'],['data_inicio','Data de início','date'],['status','Status','select',['ativa','pausada','cancelada']]] },
   avaliacoes: { label:'Avaliações', fields:[['cliente_id','Cliente ID (opcional)','number',false],['nome_cliente','Nome do cliente','text'],['nota','Nota (1 a 5)','number'],['comentario','Comentário','textarea',false],['aprovado','Aprovada','checkbox']] },
   barbeiros: { label:'Barbeiros', fields:[['nome','Nome','text'],['especialidade','Especialidade','text'],['anos_experiencia','Anos de experiência','number'],['foto','Foto/URL','text',false],['ativo','Ativo','checkbox']] },
@@ -12,7 +11,7 @@ const tables = {
 };
 
 const $ = (selector) => document.querySelector(selector);
-const state = { csrf:'', resource:'agendamentos', page:1, pages:1, rows:[] };
+const state = { csrf:'', resource:'assinaturas', page:1, pages:1, rows:[] };
 const loginPanel = $('#loginPanel');
 const dashboard = $('#dashboard');
 const notice = $('#notice');

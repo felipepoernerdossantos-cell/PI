@@ -104,7 +104,6 @@ function textValue(mixed $value, string $label, int $max, bool $required = true)
 }
 
 $fields = [
-    'agendamentos' => ['cliente_id'=>'int','barbeiro_id'=>'int','servico_id'=>'int','data_agendamento'=>'date','hora_agendamento'=>'time','status'=>['agendado','confirmado','concluido','cancelado'],'observacoes'=>'text?'],
     'assinaturas' => ['cliente_id'=>'int','plano'=>'text:100','valor_mensal'=>'decimal','data_inicio'=>'date','status'=>['ativa','pausada','cancelada']],
     'avaliacoes' => ['cliente_id'=>'int?','nome_cliente'=>'text:120','nota'=>'rating','comentario'=>'text?:700','aprovado'=>'bool'],
     'barbeiros' => ['nome'=>'text:120','especialidade'=>'text:150','anos_experiencia'=>'uint','foto'=>'text?:255','ativo'=>'bool'],
@@ -116,7 +115,6 @@ $fields = [
     'servicos' => ['nome'=>'text:120','descricao'=>'text?:255','preco'=>'decimal','duracao_minutos'=>'uint','ativo'=>'bool'],
 ];
 $requiredFields = [
-    'agendamentos'=>['cliente_id','barbeiro_id','servico_id','data_agendamento','hora_agendamento'],
     'assinaturas'=>['cliente_id','data_inicio'],
     'avaliacoes'=>['nome_cliente','nota'],
     'barbeiros'=>['nome','especialidade'],
@@ -203,36 +201,6 @@ function cleanFields(array $input, array $schema): array
     return $clean;
 }
 
-function availability(PDO $pdo, int $barberId, string $date, int $duration, string $time): bool
-{
-    $day = DateTime::createFromFormat('!Y-m-d', $date);
-    if (!$day || $day->format('Y-m-d') !== $date || (int) $day->format('N') === 7 || $date < date('Y-m-d')) {
-        return false;
-    }
-    $start = strtotime($date . ' ' . $time);
-    $startMinute = (int) date('G', $start) * 60 + (int) date('i', $start);
-    $endMinute = $startMinute + $duration;
-    $closingMinute = (int) $day->format('N') === 6 ? 18 * 60 : 20 * 60;
-    if ($startMinute < 9 * 60 || $endMinute > $closingMinute || ($date === date('Y-m-d') && $start <= time())) {
-        return false;
-    }
-    $query = $pdo->prepare(
-        "SELECT a.hora_agendamento, s.duracao_minutos
-         FROM agendamentos a JOIN servicos s ON s.id = a.servico_id
-         WHERE a.barbeiro_id = ? AND a.data_agendamento = ? AND a.status <> 'cancelado'"
-    );
-    $query->execute([$barberId, $date]);
-    foreach ($query->fetchAll() as $booking) {
-        $otherStart = (int) date('G', strtotime($booking['hora_agendamento'])) * 60
-            + (int) date('i', strtotime($booking['hora_agendamento']));
-        if ($startMinute < $otherStart + (int) $booking['duracao_minutos']
-            && $endMinute > $otherStart) {
-            return false;
-        }
-    }
-    return true;
-}
-
 try {
     $pdo = database();
     $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -288,79 +256,6 @@ try {
             'reviews'=>$reviews,
             'reviewSummary'=>$reviewSummary,
         ]);
-    }
-
-    if ($action === 'availability' && $method === 'GET') {
-        $date = $_GET['date'] ?? '';
-        $barberId = positiveInt($_GET['barber_id'] ?? null, 'barbeiro_id');
-        if (!is_string($date)) {
-            respond(422, ['error' => 'Data inválida.']);
-        }
-        $day = DateTime::createFromFormat('!Y-m-d', (string) $date);
-        if (!$day || $day->format('Y-m-d') !== $date) {
-            respond(422, ['error' => 'Data inválida.']);
-        }
-        $query = $pdo->prepare(
-            "SELECT a.hora_agendamento, s.duracao_minutos
-             FROM agendamentos a JOIN servicos s ON s.id = a.servico_id
-             WHERE a.barbeiro_id = ? AND a.data_agendamento = ? AND a.status <> 'cancelado'"
-        );
-        $query->execute([$barberId, $date]);
-        respond(200, ['bookings'=>$query->fetchAll()]);
-    }
-
-    if ($action === 'booking' && $method === 'POST') {
-        $input = body();
-        $name = textValue($input['name'] ?? null, 'Nome', 120);
-        $phone = textValue($input['phone'] ?? null, 'Telefone', 25);
-        $email = textValue($input['email'] ?? null, 'E-mail', 150);
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            respond(422, ['error' => 'E-mail inválido.']);
-        }
-        if (!preg_match('/^[0-9()+ .-]{10,25}$/', $phone)) {
-            respond(422, ['error' => 'Telefone inválido.']);
-        }
-        $barberId = positiveInt($input['barber_id'] ?? null, 'Barbeiro');
-        $serviceId = positiveInt($input['service_id'] ?? null, 'Serviço');
-        $date = textValue($input['date'] ?? null, 'Data', 10);
-        $time = textValue($input['time'] ?? null, 'Horário', 8);
-        if (!preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/', $time)) {
-            respond(422, ['error' => 'Horário inválido.']);
-        }
-        $notes = textValue($input['notes'] ?? '', 'Observações', 500, false);
-        $pdo->beginTransaction();
-        $lock = $pdo->prepare('SELECT id FROM barbeiros WHERE id = ? AND ativo = 1 FOR UPDATE');
-        $lock->execute([$barberId]);
-        if (!$lock->fetch()) {
-            $pdo->rollBack();
-            respond(422, ['error' => 'Barbeiro indisponível.']);
-        }
-        $serviceQuery = $pdo->prepare('SELECT id,duracao_minutos FROM servicos WHERE id = ? AND ativo = 1');
-        $serviceQuery->execute([$serviceId]);
-        $service = $serviceQuery->fetch();
-        if (!$service || !availability($pdo, $barberId, $date, (int) $service['duracao_minutos'], $time)) {
-            $pdo->rollBack();
-            respond(409, ['error' => 'Horário indisponível. Escolha outro horário.']);
-        }
-        $clientQuery = $pdo->prepare(
-            'INSERT INTO clientes (nome,telefone,email) VALUES (?,?,?)
-             ON DUPLICATE KEY UPDATE nome=VALUES(nome), telefone=VALUES(telefone), id=LAST_INSERT_ID(id)'
-        );
-        $clientQuery->execute([$name, $phone, $email]);
-        $clientId = (int) $pdo->lastInsertId();
-        if (!$clientId) {
-            $findClient = $pdo->prepare('SELECT id FROM clientes WHERE email = ?');
-            $findClient->execute([$email]);
-            $clientId = (int) $findClient->fetchColumn();
-        }
-        $insert = $pdo->prepare(
-            "INSERT INTO agendamentos (cliente_id,barbeiro_id,servico_id,data_agendamento,hora_agendamento,observacoes)
-             VALUES (?,?,?,?,?,?)"
-        );
-        $insert->execute([$clientId,$barberId,$serviceId,$date,$time,$notes]);
-        $id = (int) $pdo->lastInsertId();
-        $pdo->commit();
-        respond(201, ['id'=>$id,'message'=>'Agendamento registrado com sucesso.']);
     }
 
     if ($action === 'message' && $method === 'POST') {

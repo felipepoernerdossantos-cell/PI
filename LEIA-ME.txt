@@ -49,12 +49,14 @@ na mesma janela; nao configuram o Apache que ja esta rodando. Nunca use root
 sem senha em producao.
 
 O site consulta do banco os servicos, barbeiros, produtos e avaliacoes
-aprovadas. Agendamentos verificam conflitos no servidor; mensagens e pedidos
-sao gravados no MariaDB. O estoque e reduzido quando um pedido e registrado.
+aprovadas. Mensagens e pedidos sao gravados no MariaDB. O estoque e reduzido
+quando um pedido e registrado. O fluxo de agendamentos foi removido.
+Ao importar barber_king.sql, a tabela antiga de agendamentos e a view
+vw_agendamentos_completos tambem sao removidas do banco.
 
 O painel protegido por login permite listar, criar, editar e excluir registros
-das tabelas agendamentos, assinaturas, avaliacoes, barbeiros, clientes,
-mensagens, pedidos, pedido_itens, produtos e servicos. A exclusao pode ser
+das tabelas assinaturas, avaliacoes, barbeiros, clientes, mensagens, pedidos,
+pedido_itens, produtos e servicos. A exclusao pode ser
 impedida por chaves estrangeiras quando existem registros relacionados.
 
 As credenciais sao lidas exclusivamente das variaveis de ambiente; nao grave

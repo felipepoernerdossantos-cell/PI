@@ -7,6 +7,8 @@
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
+USE `if0_43297127_barberking`;
+
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
@@ -18,7 +20,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Banco de dados: `barber_king`
+-- Banco de dados de hospedagem: `if0_43297127_barberking`
 --
 
 -- --------------------------------------------------------
@@ -223,33 +225,11 @@ INSERT INTO `servicos` (`id`, `nome`, `descricao`, `preco`, `duracao_minutos`, `
 
 -- --------------------------------------------------------
 
---
--- Estrutura stand-in para view `vw_agendamentos_completos`
--- (Veja abaixo para a visão atual)
---
-CREATE TABLE `vw_agendamentos_completos` (
-`id` bigint(20) unsigned
-,`cliente` varchar(120)
-,`telefone` varchar(25)
-,`email` varchar(150)
-,`barbeiro` varchar(120)
-,`servico` varchar(120)
-,`preco` decimal(10,2)
-,`duracao_minutos` smallint(5) unsigned
-,`data_agendamento` date
-,`hora_agendamento` time
-,`status` enum('agendado','confirmado','concluido','cancelado')
-,`criado_em` timestamp
-);
-
--- --------------------------------------------------------
-
---
 -- Estrutura para view `vw_agendamentos_completos`
 --
-DROP TABLE IF EXISTS `vw_agendamentos_completos`;
+DROP VIEW IF EXISTS `vw_agendamentos_completos`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vw_agendamentos_completos`  AS SELECT `a`.`id` AS `id`, `c`.`nome` AS `cliente`, `c`.`telefone` AS `telefone`, `c`.`email` AS `email`, `b`.`nome` AS `barbeiro`, `s`.`nome` AS `servico`, `s`.`preco` AS `preco`, `s`.`duracao_minutos` AS `duracao_minutos`, `a`.`data_agendamento` AS `data_agendamento`, `a`.`hora_agendamento` AS `hora_agendamento`, `a`.`status` AS `status`, `a`.`criado_em` AS `criado_em` FROM (((`agendamentos` `a` join `clientes` `c` on(`c`.`id` = `a`.`cliente_id`)) join `barbeiros` `b` on(`b`.`id` = `a`.`barbeiro_id`)) join `servicos` `s` on(`s`.`id` = `a`.`servico_id`)) ;
+CREATE ALGORITHM=UNDEFINED SQL SECURITY INVOKER VIEW `vw_agendamentos_completos` AS SELECT `a`.`id` AS `id`, `c`.`nome` AS `cliente`, `c`.`telefone` AS `telefone`, `c`.`email` AS `email`, `b`.`nome` AS `barbeiro`, `s`.`nome` AS `servico`, `s`.`preco` AS `preco`, `s`.`duracao_minutos` AS `duracao_minutos`, `a`.`data_agendamento` AS `data_agendamento`, `a`.`hora_agendamento` AS `hora_agendamento`, `a`.`status` AS `status`, `a`.`criado_em` AS `criado_em` FROM (((`agendamentos` `a` join `clientes` `c` on(`c`.`id` = `a`.`cliente_id`)) join `barbeiros` `b` on(`b`.`id` = `a`.`barbeiro_id`)) join `servicos` `s` on(`s`.`id` = `a`.`servico_id`));
 
 --
 -- Índices para tabelas despejadas
